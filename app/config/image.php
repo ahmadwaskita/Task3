@@ -18,7 +18,7 @@ return array(
 	'thumb_width'		=> 100,
 
 	//thumbnails height size
-	'thumb_height'		=> 200,
+	'tinggi'		=> 200,
 
 	//clicked width size
 	'click_width' 		=> 400,

@@ -2,7 +2,7 @@
 
 @section("content")
 
-{{Form::model($images, array('route'=> array('images.update', $images->id),'method'=>'PUT','class'=>'form-horizontal','role'=>'form'))}}
+{{Form::model($image, array('route'=> array('images.update', $image->id),'method'=>'PUT','class'=>'form-horizontal','role'=>'form'))}}
 	
 	<div class="form-group">
 		{{Form::open(array('url'=>'images', 'class' => 'form-horizontal', 'role'=>'form', 'files'=>true))}}

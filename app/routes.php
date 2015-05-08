@@ -17,3 +17,16 @@ Route::get('/', function()
 });
 
 Route::resource('images', 'ImagesController');
+
+Route::get('images/show/{id}', array('as'=>'get_image_information','uses'=>'ImagesController@show'))->where('id','[0-9]+');
+
+Route::get('test',function(){
+	//mass duplicate all columns
+	$images = Images::all();
+	foreach($images as $each) {
+		Images::create(array(
+			'title'	=> $each->title,
+			'image'	=> $each->image
+		));
+	}
+});

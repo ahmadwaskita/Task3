@@ -50,15 +50,15 @@ class ImagesController extends \BaseController {
 			$filename = pathinfo($filename, PATHINFO_FILENAME);
 
 			//salt and make an url-friendly version of the file name
-			$fullname = Str::slug(Str::random(8).$filename).'/'.$image->getClientOriginalName();
+			$fullname = Str::slug(Str::random(8).$filename).'.'.$image->getClientOriginalExtension();
 
 			//upload the image first to the upload folder, then make a thumbnail from the uploaded image
-			$upload = $image->move(Config::get('image.upload_folder'), $fullname);
+			$upload = $image->move(Config::get('image.db_upload_folder'), $fullname);
 
 			//these parameters are related to the image processing class using intervention
-			Image::make(Config::get('image.upload_folder').'/'.$fullname)
+			Image::make(Config::get('image.db_upload_folder').'/'.$fullname)
 				->resize(Config::get('image.thumb_width','image.thumb_height'))
-				->save(Config::get('image.thumb_folder').'/'.$fullname);
+				->save(Config::get('image.db_thumb_folder').'/'.$fullname);
 
 			//if the file is not uploaded, show an error message. Else, add a new column to the database and show the success message
 				if($upload){
@@ -67,7 +67,7 @@ class ImagesController extends \BaseController {
 					$insert->title = Input::get('title');
 					$insert->image = $fullname;
 					$insert->save();
-					return Redirect::to('images.show')
+					return Redirect::to('images/show/'.$insert->id)
 						->with('success', 'Your image is uploaded successfuly!');
 				} else {
 					//image cannot be uploaded
@@ -95,8 +95,11 @@ class ImagesController extends \BaseController {
 		$image = Images::find($id);
 
 		//load the view with found data and pass the variable to the view
-		return View::make('images.show')
-			->with('image', $image);
+		if($image){
+			return View::make('images.show')->with('image', $image);
+		} else {
+			return Redirect::to('images.index')->with('error','Image not found');
+		}
 	}
 
 
@@ -109,7 +112,7 @@ class ImagesController extends \BaseController {
 	public function edit($id)
 	{
 		//
-		$image = Images::find($id);
+		$images = Images::find($id);
 		return View::make('images.edit')
 			->with('image', $images);
 	}
@@ -124,21 +127,23 @@ class ImagesController extends \BaseController {
 	public function update($id)
 	{
 		//
-		$validate = Validator::make(input::all(), Images::$upload_rules($id));
+		$validate = Validator::make(Input::all(), Images::$upload_rules);
 		if($validate->fails()){
 			return Redirect::to('images/'.$id.'/edit')
 				->withErrors($validate)
 				->withInput();
 		} else {
 			//if validation success, upload the image to the database and process it
-			$image = Input::file('image');
+			$temp = Images::find($id);
+                        File::delete(Config::get('image.db_thumb_folder').'/'.$temp->image);
+                        $image = Input::file('image');
 
 			//This is the original uploaded client name of the image
 			$filename = $image->getClientOriginalName();
 			$filename = pathinfo($filename, PATHINFO_FILENAME);
 
 			//salt and make an url-friendly version of the file name
-			$fullname = Str::slug(Str::random(8).$filename).'/'.$image->getClientOriginalName();
+			$fullname = Str::slug(Str::random(8).$filename).'.'.$image->getClientOriginalExtension();
 
 			//upload the image first to the upload folder, then make a thumbnail from the uploaded image
 			$upload = $image->move(Config::get('image.upload_folder'), $fullname);
