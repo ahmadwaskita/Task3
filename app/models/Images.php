@@ -7,6 +7,6 @@ class Images extends \Eloquent {
 
 	public static $upload_rules = array(
 		'title' => 'required|min:3',
-		'image'	=> 'required'
+		'image'	=> 'required|mimes:jpg,jpeg,bmp,png'
 	);
 }

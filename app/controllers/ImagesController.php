@@ -2,209 +2,239 @@
 
 class ImagesController extends \BaseController {
 
-	/**
-	 * Display a listing of the resource.
-	 *
-	 * @return Response
-	 */
-	public function index()
-	{
-		//
-		$images = Images::all();
-		return View::make('images.index')
-			->with('images', $images);
-	}
+    /**
+     * Display a listing of the resource.
+     *
+     * @return Response
+     */
+    public function index() {
+        //
+        $images = Images::all();
+        return View::make('images.index')
+                        ->with('images', $images);
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return Response
+     */
+    public function create() {
+        //
+        return View::make('images.create');
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @return Response
+     */
+    public function store() {
+        //
+        $validate = Validator::make(Input::all(), Images::$upload_rules);
+        if ($validate->fails()) {
+            return Redirect::to('images/create')
+                            ->withErrors($validate)
+                            ->withInput();
+        } else {
+            //if validation success, upload the image to the database and process it
+            $image = Input::file('image');
+
+            //This is the original uploaded client name of the image
+            $filename = $image->getClientOriginalName();
+            $filename = pathinfo($filename, PATHINFO_FILENAME);
+
+            //randomize filename
+            $fullname = Str::slug(Str::random(8) . $filename) . '.' . $image->getClientOriginalExtension();
 
 
-	/**
-	 * Show the form for creating a new resource.
-	 *
-	 * @return Response
-	 */
-	public function create()
-	{
-		//
-		return View::make('images.create');
-	}
 
+            //check if image was inputted
+            if ($image) {
+                //image will be uploaded, add column first to the database
+                $insert = new Images;
+                $insert->title = Input::get('title');
+                $insert->image = $fullname;
+                $insert->save();
+                $id = $insert->id;
 
-	/**
-	 * Store a newly created resource in storage.
-	 *
-	 * @return Response
-	 */
-	public function store()
-	{
-		//
-		$validate = Validator::make(Input::all(), Images::$upload_rules);
-		if($validate->fails()){
-			return Redirect::to('images/create')
-				->withErrors($validate)
-				->withInput();
-		} else {
-			//if validation success, upload the image to the database and process it
-			$image = Input::file('image');
+                //create directory for uploaded images
+                $directory = public_path() . '/uploads/' . $id . '/';
+                $existDir = File::isDirectory($directory);
+                if (!$existDir) {
+                    File::makeDirectory($directory, 0775, true);
+                }
+                //upload the image first to the upload folder identified by $id
+                $image->move($directory, $fullname);
+                $thumb = 'thumb_' . $fullname;
 
-			//This is the original uploaded client name of the image
-			$filename = $image->getClientOriginalName();
-			$filename = pathinfo($filename, PATHINFO_FILENAME);
+                //these parameters are related to the image processing class using intervention
+                Image::make($directory . $fullname)
+                        ->resize(100, 200)
+                        ->save($directory . $thumb);
 
-			//salt and make an url-friendly version of the file name
-			$fullname = Str::slug(Str::random(8).$filename).'.'.$image->getClientOriginalExtension();
+                return Redirect::to('images/show/' . $insert->id)
+                                ->with('success', 'Your image is uploaded successfuly!');
+            } else {
+                //image cannot be uploaded
+                return Redirect::to('/')
+                                ->withInput()
+                                ->with('error', 'Sorry the image could not be uploaded, please try again later');
+            }
 
-			//upload the image first to the upload folder, then make a thumbnail from the uploaded image
-			$upload = $image->move(Config::get('image.db_upload_folder'), $fullname);
+            //$image = new Image;
+            $image->title = Input::get('title');
+        }
+    }
 
-			//these parameters are related to the image processing class using intervention
-			Image::make(Config::get('image.db_upload_folder').'/'.$fullname)
-				->resize(Config::get('image.thumb_width','image.thumb_height'))
-				->save(Config::get('image.db_thumb_folder').'/'.$fullname);
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return Response
+     */
+    public function show($id) {
+        //take all images with a pagination feature
+        $image = Images::find($id);
+        $directory = '/uploads/' . $id . '/';
 
-			//if the file is not uploaded, show an error message. Else, add a new column to the database and show the success message
-				if($upload){
-					//image will be uploaded, add column first to the database
-					$insert = new Images;
-					$insert->title = Input::get('title');
-					$insert->image = $fullname;
-					$insert->save();
-					return Redirect::to('images/show/'.$insert->id)
-						->with('success', 'Your image is uploaded successfuly!');
-				} else {
-					//image cannot be uploaded
-					return Redirect::to('/')
-						->withInput()
-						->with('error', 'Sorry the image could not be uploaded, please try again later');
-				}
+        //load the view with found data and pass the variable to the view
+        if ($image) {
+            return View::make('images.show')->with('image', $image)->with('directory', $directory);
+        } else {
+            return Redirect::to('images.index')->with('error', 'Image not found');
+        }
+    }
 
-			//$image = new Image;
-			//$image->title = Input::get('title');
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return Response
+     */
+    public function edit($id) {
+        //
+        $images = Images::find($id);
+        return View::make('images.edit')
+                        ->with('image', $images);
+    }
 
-		}
-	}
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  int  $id
+     * @return Response
+     */
+    public function update($id) {
+        //
+        //find image in databases
+        $file = Input::file('image');
+        $db_image = Images::find($id);
+        if (is_null($file)) {
+            $image = new Symfony\Component\HttpFoundation\File\File(public_path() . '/uploads/' . $id . '/' . $db_image->image);
+            $token = false;
+            //$mime = $image->getMimeType();
+        } else {
+            $image = Input::file('image');
+            $token = true;
+            File::cleanDirectory(public_path() . '/uploads/' . $id . '/');
+        }
 
+        $validate = Validator::make(
+                        array(
+                    'title' => Input::get('title'),
+                    'image' => $image
+                        ), array(
+                    'title' => 'required|min:3',
+                    'image' => 'required|mimes:jpeg,jpg,bmp,png'
+                        )
+        );
 
-	/**
-	 * Display the specified resource.
-	 *
-	 * @param  int  $id
-	 * @return Response
-	 */
-	public function show($id)
-	{
-		//take all images with a pagination feature
-		$image = Images::find($id);
+        if ($validate->fails()) {
+            return Redirect::to('images/' . $id . '/edit')
+                            ->withErrors($validate)
+                            ->withInput();
+        } else {
+            //if validation success, upload the image to the database and process it
+            //$image = Input::file('image');
+            //if new images uploaded
+            if ($token) {
+                //This is the original uploaded client name of the image
+                $filename = $image->getClientOriginalName();
+                $filename = pathinfo($filename, PATHINFO_FILENAME);
 
-		//load the view with found data and pass the variable to the view
-		if($image){
-			return View::make('images.show')->with('image', $image);
-		} else {
-			return Redirect::to('images.index')->with('error','Image not found');
-		}
-	}
+                //randomize filename
+                $fullname = Str::slug(Str::random(8) . $filename) . '.' . $image->getClientOriginalExtension();
+            }
 
+            //check if image was inputted
+            if ($image) {
+                //image will be uploaded, add column first to the database
+                $db_image->title = Input::get('title');
+                if ($token) {
+                    $db_image->image = $fullname;
+                }
+                $db_image->save();
+                $id = $db_image->id;
 
-	/**
-	 * Show the form for editing the specified resource.
-	 *
-	 * @param  int  $id
-	 * @return Response
-	 */
-	public function edit($id)
-	{
-		//
-		$images = Images::find($id);
-		return View::make('images.edit')
-			->with('image', $images);
-	}
+                //create directory for  new uploaded images
 
+                $directory = public_path() . '/uploads/' . $id . '/';
+                $existDir = File::isDirectory($directory);
+                if (!$existDir) {
+                    File::makeDirectory($directory, 0775, true);
+                }
+                //upload the image first to the upload folder identified by $id
+                if ($token) {
+                    $image->move($directory, $fullname);
+                    $thumb = 'thumb_' . $fullname;
+                    //these parameters are related to the image processing class using intervention
+                    Image::make($directory . $fullname)
+                            ->resize(100, 200)
+                            ->save($directory . $thumb);
+                }
 
-	/**
-	 * Update the specified resource in storage.
-	 *
-	 * @param  int  $id
-	 * @return Response
-	 */
-	public function update($id)
-	{
-		//
-		$validate = Validator::make(Input::all(), Images::$upload_rules);
-		if($validate->fails()){
-			return Redirect::to('images/'.$id.'/edit')
-				->withErrors($validate)
-				->withInput();
-		} else {
-			//if validation success, upload the image to the database and process it
-			$temp = Images::find($id);
-                        File::delete(Config::get('image.db_thumb_folder').'/'.$temp->image);
-                        $image = Input::file('image');
+                return Redirect::to('images/show/' . $db_image->id)
+                                ->with('success', 'Your image is updated successfuly!');
+            } else {
+                //image cannot be uploaded
+                return Redirect::to('/')
+                                ->withInput()
+                                ->with('error', 'Sorry the image could not be uploaded, please try again later');
+            }
 
-			//This is the original uploaded client name of the image
-			$filename = $image->getClientOriginalName();
-			$filename = pathinfo($filename, PATHINFO_FILENAME);
+            //$image = new Image;
+            $image->title = Input::get('title');
+        }
+    }
 
-			//salt and make an url-friendly version of the file name
-			$fullname = Str::slug(Str::random(8).$filename).'.'.$image->getClientOriginalExtension();
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return Response
+     */
+    public function destroy($id) {
+        //find the image by id
+        $image = Images::find($id);
+        $directory = public_path() . '/uploads/' . $id . '/';
 
-			//upload the image first to the upload folder, then make a thumbnail from the uploaded image
-			$upload = $image->move(Config::get('image.upload_folder'), $fullname);
+        //if there's an image, continue with deleting process
+        if ($image) {
+            //delete first the image from upload folder
+            File::deleteDirectory($directory);
 
-			//these parameters are related to the image processing class using intervention
-			Image::make(Config::get('image.upload_folder').'/'.$fullname)
-				->resize(Config::get('image.thumb_width','image.thumb_height'))
-				->save(Config::get('image.thumb_folder').'/'.$fullname);
+            //delete the value from database
+            $image->delete();
 
-			//if the file is not uploaded, show an error message. Else, add a new column to the database and show the success message
-				if($upload){
-					//image will be uploaded, add column first to the database
-					$insert = Images::find($id);
-					$insert->title = Input::get('title');
-					$insert->image = $fullname;
-					$insert->save();
-					return Redirect::to('images.show')
-						->with('success', 'Your image is updated successfuly!');
-				} else {
-					//image cannot be uploaded
-					return Redirect::to('images')
-						->withInput()
-						->with('error', 'Sorry the image could not be uploaded, please try again later');
-				}
-
-			//$image = new Image;
-			//$image->title = Input::get('title');
-
-		}
-	}
-
-
-	/**
-	 * Remove the specified resource from storage.
-	 *
-	 * @param  int  $id
-	 * @return Response
-	 */
-	public function destroy($id)
-	{
-		//find the image by id
-		$image = Images::find($id);
-
-		//if there's an image, continue with deleting process
-		if($image){
-			//delete first the image from FTP
-			File::delete(Config::get('image.upload_folder').'/'.$image->image);
-			File::delete(Config::get('image.thumb_folder').'/'.$image->image);
-
-			//delete the value from database
-			$image->delete();
-
-			//return to the main page with a success message
-			return Redirect::to('images.index')
-			 	->with('success', 'Image deleted successfully');
-		} else {
-			//Image not found, redirect to the index page with an error message
-			return Redirect::to('images.index')
-				->with('error', 'No image with given ID found');
-		}
-	}
-
+            //return to the main page with a success message
+            return Redirect::to('images')
+                            ->with('success', 'Image deleted successfully');
+        } else {
+            //Image not found, redirect to the index page with an error message
+            return Redirect::to('images')
+                            ->with('error', 'No image with given ID found');
+        }
+    }
 
 }

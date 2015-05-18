@@ -3,7 +3,7 @@
 @section("content")
 	<div>
 	<article class="white-panel">
-		{{HTML::image(Config::get('image.thumb_folder').'/'.$image->image)}}
+		{{HTML::image(Request::root().$directory.'thumb_'.$image->image)}}
 			<h1><a href="#">{{$image->title}}</a></h1>
                         {{link_to('images/'.$image->id,'Show',array('class'=>'btn btn-info'))}}
 			{{link_to('images/'.$image->id.'/edit','Edit', array('class'=>'btn btn-warning'))}}

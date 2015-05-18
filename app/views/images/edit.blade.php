@@ -2,16 +2,28 @@
 
 @section("content")
 
-{{Form::model($image, array('route'=> array('images.update', $image->id),'method'=>'PUT','class'=>'form-horizontal','role'=>'form'))}}
+{{Form::model($image, array('route'=> array('images.update', $image->id),'files'=>true,'method'=>'PUT','class'=>'form-horizontal','role'=>'form'))}}
 	
 	<div class="form-group">
-		{{Form::open(array('url'=>'images', 'class' => 'form-horizontal', 'role'=>'form', 'files'=>true))}}
-		{{Form::text('title','',array('placeholder'=>'Please insert your title here'))}}
-		{{Form::file('image')}}
-		{{Form::submit('save', array('class'=>'btn btn-primary', 'name'=>'send'))}}
-		{{Form::close()}}
-		<div class="clear"></div>
+		<label for="title" class="col-sm-5 control-label">New Title</label>
+		<div class="col-sm-10">
+			{{Form::text('title',$image->title,array('id'=>'title','class'=>'form-control'))}}	
+		</div>		
 	</div>
-{{Form::close()}}
+	<div class="form-group">
+		<p></p>
+		{{HTML::image(Request::root().'/uploads/'.$image->id.'/'.$image->image)}}
+		<p></p>
+		<label for="image" class="col-sm-7 control-label">New Image</label>
+		<div class="col-sm-10">
+			{{Form::file('image')}}		
+		</div>
+	</div>
+	<div class="form-group">
+		<div class="col-sm-10">
+			{{Form::submit('save', array('class'=>'btn btn-primary', 'name'=>'send'))}}		
+		</div>
+	</div>	
+	{{Form::close()}}
 
 @stop
