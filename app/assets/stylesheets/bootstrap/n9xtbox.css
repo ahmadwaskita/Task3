@@ -1,0 +1,48 @@
+#lightbox {
+  position: fixed; /* keeps the lightbox window in the current viewport */
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background: black;
+  z-index: 1;
+}
+
+#lightboximage {
+  width:100%;
+  height:100%;
+  position: fixed;
+  top:0;
+  left:0;
+  z-index: 2;
+}
+
+#lightboximage img {
+  position: absolute;
+  margin-right: -50%;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border: 4px solid #fff;
+}
+
+#lightboximage  .lb-description {
+  position:absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin: 20% 0 0 0;
+  padding: 20px;
+  height: 20px;
+  background: #000;
+  color: #fff;
+  opacity: 0.6;
+}
+
+#lightboximage .lb-description a.close {
+  color: #fff;
+  float: right;
+  text-decoration: none;
+  font-size: 22px;
+  margin-top: -7px;
+}

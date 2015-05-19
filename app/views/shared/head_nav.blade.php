@@ -7,13 +7,12 @@
             <span class="icon-bar"/>
             <span class="icon-bar"/>
           </button>
-          <a href=”#” class = "navbar-brand">CRUD Images</a>
+          <a class = "navbar-brand">CRUD Images</a>
         </div>
         <div class="collapse navbar-collapse">
           <ul class="nav navbar-nav navbar-right">
-            <li><a href="images">Home</a></li>
-            <li><a href="images/show">List</a></li>
-            <li><a href="images/create">Upload</a></li>
+            <li>{{link_to('images','Home')}}</li>
+            <li>{{link_to('images/create','Upload')}}</li>
           </ul>
         </div>  
       </div>
