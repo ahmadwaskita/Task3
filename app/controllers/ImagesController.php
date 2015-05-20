@@ -70,7 +70,7 @@ class ImagesController extends \BaseController {
 
                 //these parameters are related to the image processing class using intervention
                 Image::make($directory . $fullname)
-                        ->resize(null, 200, function($constraint){
+                        ->resize(200, null, function($constraint){
                             $constraint->aspectRatio();
                         })
                         ->save($directory . $thumb);

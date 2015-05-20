@@ -11,7 +11,6 @@
 // The available directives right now are require, require_directory, and require_tree
 //
 //= require jquery
-//= require bootstrap/jquery-1.11.3
+//= require bootstrap/n9xtbox
 //= require bootstrap/bootstrap
-//= require bootstrap/pinterest_grid
 //= require_tree .
