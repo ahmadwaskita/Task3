@@ -2,24 +2,10 @@
 
 @section("content")
 
-<div id="myModal" class="modal fade">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title">Title</h4>
-                </div>
-                <div class="modal-body">
-                    <p>working</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">close</button>
-                </div>
-            </div>
-        </div>
-
 @foreach($images as $image)
 
 <div class="col-sm-4 col-md-3 col-lg-3 thumbnail">
-    {{HTML::image(Request::root().'/uploads/'.$image->id.'/thumb_'.$image->image, 'image not available',array('data-toggle'=>'modal','role'=>'button','href'=>'#myModal'))}}
+    {{HTML::image(Request::root().'/uploads/'.$image->id.'/thumb_'.$image->image, 'image not available',array('role'=>'button','class'=>'lightbox_trigger','href'=>Request::root().'/uploads/'.$image->id.'/'.$image->image))}}
     <div class="caption">
     	<h3 class="text-primary">{{$image->title}}</h3>
     	{{link_to('images/'.$image->id, 'Show', array('class' => 'btn btn-info'))}}

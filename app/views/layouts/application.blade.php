@@ -5,6 +5,30 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Ahmad's Images CRUD</title>
+       <style type="text/css">
+
+    #lightbox{
+        position:fixed;
+        top:0;
+        left:0;
+        width: 100%;
+        height:100%;
+        background: rgba(0,0,0,.7);
+        text-align: center;
+    }
+    #lightbox p{
+        text-align: right;
+        color: #fff;
+        margin-right: 20px;
+        font-size: 12px;
+    }
+    #lightbox img{
+        box-shadow:0 0 25px #111;
+        -webkit-box-shadow:0 0 25px #111;
+        -moz-box-shadow: 0 0 25px #111;
+        max-width: 940px;
+    }
+       </style>
 
         <!-- Bootstrap -->
         <?= javascript_include_tag() ?>
@@ -44,7 +68,10 @@
             @if(Session::has('success'))
             <h3 class="error">{{Session::get('success')}}</h3>
             @endif
-
+            <div id="lightbox">
+                <p role="button">click to close</p>
+                <div id="content"></div>
+            </div>
             <div class="row">
                 @yield("content")
             </div>
@@ -52,5 +79,31 @@
         </div>
 
         </div>
+        <script type="text/javascript">
+    $(document).ready(function($){
+
+        $('.lightbox_trigger').click(function(e){
+
+            e.preventDefault();
+
+            var image_href = $(this).attr("href");
+
+            if ($('#lightbox').length > 0){
+
+                $('#content').html('<img src="' + image_href + '" />');
+                $('#lightbox').show();
+            } else {
+                var lightbox = 
+                    '<div id="lightbox">' + '<p>Click to close</p>' + '<div id="content">' + '<img src="' + image_href + '"/>'+'</div>';
+
+                    $('body').append(lightbox);
+            }
+        });
+
+        $('#lightbox').on('click', function(){
+            $('#lightbox').hide();
+        });
+    });
+</script>
     </body>
 </html>
